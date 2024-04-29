@@ -1,0 +1,119 @@
+1. What was the total quantity sold for all products?
+
+select sum(qty) from 
+sales;
+
+2. What is the total generated revenue for all products before discounts?
+
+select sum(qty*price) from 
+sales;
+
+3. What was the total discount amount for all products?
+
+select sum(discount) from 
+sales;
+
+4. How many unique transactions were there?
+
+select count(distinct(txn_id))
+from sales ;
+
+5. What are the average unique products purchased in each transaction?
+
+with cte as(select txn_id,count(distinct(prod_id)) dis_count_prod
+from sales
+group by txn_id)
+select
+   round(avg(dis_count_prod))
+from cte
+
+6.What is the average discount value per transaction?
+
+select round(avg(discount))
+from sales;
+
+7. What is the average revenue for member transactions and non-member transactions?
+
+with cte as(select sales.*,
+    case
+		 when member = 'false' then 'Non-Member'
+		  else 'Member'
+    end as MEMBERS
+from sales)
+
+select MEMBERS,avg(qty * price)
+from cte
+group by  MEMBERS;
+
+8. What are the top 3 products by total revenue before discount?
+
+select product_name,sum(s.qty * s.price) total_revenue
+from product_details as pd
+join sales as s
+on pd.product_id = s.prod_id
+group by product_name
+order by total_revenue desc
+limit 3;
+
+9. What are the total quantity, revenue and discount for each segment?
+
+select  pd.segment_id,sum(s.qty) Total_qty,sum(s.qty*s.price) total_revenue,sum(s.discount) total_revenue
+from product_details as pd
+join sales as s
+on pd.product_id = s.prod_id
+group by pd.segment_id;
+
+10. What is the top selling product for each segment?
+
+
+with cte as(select pd.product_name,pd.segment_name,sum(s.qty*s.price) as selling_price,
+    row_number()over(partition by pd.segment_name order by sum(s.qty*s.price) desc) top_sell_segment
+from product_details as pd
+join sales as s
+on pd.product_id = s.prod_id
+group by pd.segment_name,pd.product_name)
+select product_name, segment_name, selling_price,top_sell_segment
+from cte
+where top_sell_segment = 1;
+
+11. What are the total quantity, revenue and discount for each category?
+
+select pd.category_name,sum(s.qty) Total_qty,sum(s.qty*s.price) total_revenue,sum(s.discount) total_revenue
+from product_details as pd
+join sales as s
+on pd.product_id = s.prod_id
+group by pd.category_name;
+
+12. What is the top selling product for each category?
+
+with cte as(select
+   pd.product_name,pd.category_name,sum(s.qty*s.price) selling_price,
+   row_number() over(partition by pd.category_name order by sum(s.qty*s.price) desc)
+from product_details as pd
+join sales as s on
+pd.product_id = s.prod_id
+group by pd.category_name,pd.product_name)
+select product_name,category_name,selling_price,row_number
+from cte
+where row_number = 1
+group by category_name,product_name,selling_price,row_number;
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
